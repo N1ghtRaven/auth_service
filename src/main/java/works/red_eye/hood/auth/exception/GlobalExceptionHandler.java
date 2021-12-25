@@ -35,11 +35,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(JwtAuthenticationException.class)
     public ResponseEntity<Response> handleContentJwt(JwtAuthenticationException e) {
-        return getHandlerResponse(e, FORBIDDEN);
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<Response> handleContentBadRequest(BadRequestException e) {
         return getHandlerResponse(e, BAD_REQUEST);
     }
 

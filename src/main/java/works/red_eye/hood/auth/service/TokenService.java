@@ -10,7 +10,7 @@ import works.red_eye.hood.auth.exception.UnauthorizedException;
 import java.security.NoSuchAlgorithmException;
 
 public interface TokenService {
-    ResponseEntity<Response> issueTokens(String username, String password) throws NotFoundException, ForbiddenException, UnauthorizedException, NoSuchAlgorithmException;
-    ResponseEntity<Response> refreshTokens(String refreshToken, String fingerprint) throws JwtAuthenticationException, NoSuchAlgorithmException, NotFoundException, ForbiddenException;
-    ResponseEntity<Response> revokeFingerprint(String fingerprint);
+    ResponseEntity<Response> issueTokens(String username, String password) throws NotFoundException, ForbiddenException, UnauthorizedException;
+    ResponseEntity<Response> refreshTokens(String refreshToken, String fingerprint) throws JwtAuthenticationException, ForbiddenException, NotFoundException;
+    ResponseEntity<Response> revokeFingerprint(String token, String fingerprint) throws JwtAuthenticationException;
 }

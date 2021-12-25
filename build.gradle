@@ -26,7 +26,8 @@ ext {
     junitVersion = '5.8.1'
     mockitoVersion = '4.0.0'
 
-    nimbusJwt = '9.15.2'
+    jjwtVersion = '0.9.1'
+    nimbusJwtVersion = '9.15.2'
 
     // Model submodule
     springSessionVersion = '2.5.2'
@@ -43,7 +44,6 @@ group = projectGroup
 version = projectVersion
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -53,13 +53,12 @@ dependencies {
     implementation group: 'org.springframework.security.oauth.boot', name: 'spring-security-oauth2-autoconfigure', version: springSecurityVersion
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: springBootVersion
     implementation group: 'org.hibernate', name: 'hibernate-validator', version: validatorVersion
-    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
-    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: nimbusJwt
+    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: jjwtVersion
+    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: nimbusJwtVersion
     developmentOnly group: 'org.springframework.boot', name: 'spring-boot-devtools', version: springBootVersion
 
     // Model
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: springBootVersion
-    implementation group: 'org.springframework.session', name: 'spring-session-jdbc', version: springSessionVersion
     implementation group: 'org.hibernate', name: 'hibernate-core', version: hibernateCoreVersion
     implementation group: 'org.postgresql', name: 'postgresql', version: postgresVersion
 

@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -17,21 +18,19 @@ import works.red_eye.hood.auth.exception.ForbiddenException;
 import works.red_eye.hood.auth.exception.JwtAuthenticationException;
 import works.red_eye.hood.auth.exception.NotFoundException;
 import works.red_eye.hood.auth.exception.UnauthorizedException;
+import works.red_eye.hood.auth.service.FingerprintService;
 import works.red_eye.hood.auth.service.RsaRegeneratorService;
 import works.red_eye.hood.auth.service.TokenService;
 import works.red_eye.hood.auth.service.UserService;
-import works.red_eye.hood.auth.util.Converter;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
 
+    private final FingerprintService fingerprintService;
     private final UserService userService;
     private final Key signingKey;
 
@@ -41,16 +40,18 @@ public class TokenServiceImpl implements TokenService {
     @Value("${jwt.refresh_token.expiration}")
     private Integer refreshExpire;
 
-    public TokenServiceImpl(UserService userService,
+    public TokenServiceImpl(FingerprintService fingerprintService,
+                            UserService userService,
                             RsaRegeneratorService rsaRegeneratorService) {
 
+        this.fingerprintService = fingerprintService;
         this.userService = userService;
         this.signingKey = rsaRegeneratorService.getSigningKeyPair().getPrivate();
     }
 
     @Override
     public ResponseEntity<Response> issueTokens(String username, String password)
-            throws NotFoundException, ForbiddenException, UnauthorizedException, NoSuchAlgorithmException {
+            throws NotFoundException, ForbiddenException, UnauthorizedException {
 
         User user = userService.getUser(username);
         if (!userService.isCorrectPassword(user, password))
@@ -76,7 +77,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public ResponseEntity<Response> refreshTokens(String refreshToken, String fingerprint)
-            throws JwtAuthenticationException, NoSuchAlgorithmException, NotFoundException, ForbiddenException {
+            throws JwtAuthenticationException, NotFoundException, ForbiddenException {
 
         validateToken(refreshToken, fingerprint);
         String username = Jwts.parser()
@@ -94,12 +95,17 @@ public class TokenServiceImpl implements TokenService {
         return ResponseEntity.ok(Response.ok(response));
     }
 
-    public ResponseEntity<Response> revokeFingerprint(String fingerprint) {
-        return null;
+    @Override
+    public ResponseEntity<Response> revokeFingerprint(String token, String fingerprint)
+            throws JwtAuthenticationException {
+
+        validateToken(token, fingerprint);
+        fingerprintService.revoke(fingerprint);
+        return ResponseEntity.ok(Response.ok());
     }
 
     private void validateToken(String token, String fingerprint)
-            throws JwtAuthenticationException, NoSuchAlgorithmException {
+            throws JwtAuthenticationException {
 
         Claims claims;
         try {
@@ -114,19 +120,22 @@ public class TokenServiceImpl implements TokenService {
         String fingerprintHash = (String) claims.get("fingerprint");
         if (!validateHash(fingerprint, fingerprintHash))
             throw new JwtAuthenticationException("Invalid fingerprint");
+
+        if (fingerprintService.isRevoked(fingerprint))
+            throw new JwtAuthenticationException("Fingerprint has been revoked");
     }
 
-    private String createAccessToken(String username, String fingerprint) throws NoSuchAlgorithmException {
+    private String createAccessToken(String username, String fingerprint) {
         return createToken(username, fingerprint, accessExpire);
     }
 
-    private String createRefreshToken(String username, String fingerprint) throws NoSuchAlgorithmException {
+    private String createRefreshToken(String username, String fingerprint) {
         return createToken(username, fingerprint, refreshExpire);
     }
 
-    private String createToken(String username, String fingerprint, Integer tokenExpire) throws NoSuchAlgorithmException {
+    private String createToken(String username, String fingerprint, Integer tokenExpire) {
         Claims claims = Jwts.claims().setSubject(username);
-        claims.put("fingerprint", hash(fingerprint));
+        claims.put("fingerprint", DigestUtils.sha256Hex(fingerprint));
 
         Date now = new Date();
         Date expire = new Date(now.getTime() + (tokenExpire * 1000));
@@ -147,14 +156,8 @@ public class TokenServiceImpl implements TokenService {
                 .build();
     }
 
-    private boolean validateHash(String data, String hash) throws NoSuchAlgorithmException {
-        return hash.equalsIgnoreCase(hash(data));
-    }
-
-    private String hash(String data) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-        return Converter.bytesToHex(hash);
+    private boolean validateHash(String data, String hash) {
+        return hash.equalsIgnoreCase(DigestUtils.sha256Hex((data)));
     }
 
 }

@@ -7,15 +7,19 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "revoke_fingerprint")
+@Table(name = "fingerprint")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class RevokeFingerprint extends BaseEntity {
+public class Fingerprint extends BaseEntity {
 
     @Column(name = "fingerprint")
     private String fingerprint;
+
+    @Column(name = "expire")
+    private LocalDateTime expire;
 
 }

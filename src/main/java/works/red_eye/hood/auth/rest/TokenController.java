@@ -9,9 +9,8 @@ import works.red_eye.hood.auth.dto.Response;
 import works.red_eye.hood.auth.exception.ForbiddenException;
 import works.red_eye.hood.auth.exception.JwtAuthenticationException;
 import works.red_eye.hood.auth.exception.NotFoundException;
+import works.red_eye.hood.auth.exception.UnauthorizedException;
 import works.red_eye.hood.auth.service.TokenService;
-
-import java.security.NoSuchAlgorithmException;
 
 @RestController
 public class TokenController {
@@ -22,18 +21,41 @@ public class TokenController {
         this.tokenService = tokenService;
     }
 
+    @PostMapping("/token")
+    public ResponseEntity<Response> token(@RequestParam String username, @RequestParam String password)
+            throws ForbiddenException, UnauthorizedException, NotFoundException {
+
+        return tokenService.issueTokens(username, password);
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<Response> refresh(@RequestParam("refresh_token") String refreshToken,
-                                            @RequestParam(required = false) String fingerprint,
+                                            @RequestParam(value = "fingerprint", required = false) String fgp,
                                             @CookieValue(value = "__Secure-Fgp", required = false) String fgpCookie)
-            throws ForbiddenException, NotFoundException, NoSuchAlgorithmException, JwtAuthenticationException {
+            throws ForbiddenException, NotFoundException, JwtAuthenticationException {
 
-        if (fgpCookie != null)
-            return tokenService.refreshTokens(refreshToken, fgpCookie);
-        else if (fingerprint != null)
+        String fingerprint = getFingerprint(fgp, fgpCookie);
+        if (fingerprint != null)
             return tokenService.refreshTokens(refreshToken, fingerprint);
         else
             return ResponseEntity.ok(Response.error("Not present fingerprint"));
+    }
+
+    @PostMapping("/revoke")
+    public ResponseEntity<Response> revoke(@RequestParam("token") String token,
+                                           @RequestParam(value = "fingerprint", required = false) String fgp,
+                                           @CookieValue(value = "__Secure-Fgp", required = false) String fgpCookie)
+            throws JwtAuthenticationException {
+
+        String fingerprint = getFingerprint(fgp, fgpCookie);
+        if (fingerprint != null)
+            return tokenService.revokeFingerprint(token, fingerprint);
+        else
+            return ResponseEntity.ok(Response.error("Not present fingerprint"));
+    }
+
+    private String getFingerprint(String param, String cookie) {
+        return cookie != null ? cookie : param;
     }
 
 }
