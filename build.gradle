@@ -1,0 +1,92 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.5.6'
+}
+
+tasks.named("bootBuildImage") {
+    imageName = "hood/auth:${version}"
+}
+
+ext {
+    projectGroup = 'works.red_eye.hood'
+    projectVersion = '0.1.0'
+
+    springVersion = '5.3.12.RELEASE'
+    springBootVersion = '2.5.4'
+    springSecurityVersion = '2.6.1'
+    lombokVersion = '1.18.20'
+    guavaVersion = '31.0.1-jre'
+    apacheCommonsVersion = '1.9'
+    okHttpVersion = '4.9.1'
+    jsonVersion = '20210307'
+    validatorVersion = '6.2.0.Final'
+    testContainersVersion = '1.16.2'
+    slf4jVersion = '1.7.32'
+    log4jVersion = '1.2.17'
+    junitVersion = '5.8.1'
+    mockitoVersion = '4.0.0'
+
+    nimbusJwt = '9.15.2'
+
+    // Model submodule
+    springSessionVersion = '2.5.2'
+    hibernateCoreVersion = '5.6.1.Final'
+    hibernateVersion = '7.0.1.Final'
+    postgresVersion = '42.2.23.jre7'
+    jacksonVersion = '2.13.0'
+}
+
+group projectGroup
+version projectVersion
+
+group = projectGroup
+version = projectVersion
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: springBootVersion
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: springBootVersion
+    implementation group: 'org.springframework.security.oauth.boot', name: 'spring-security-oauth2-autoconfigure', version: springSecurityVersion
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: springBootVersion
+    implementation group: 'org.hibernate', name: 'hibernate-validator', version: validatorVersion
+    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
+    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: nimbusJwt
+    developmentOnly group: 'org.springframework.boot', name: 'spring-boot-devtools', version: springBootVersion
+
+    // Model
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: springBootVersion
+    implementation group: 'org.springframework.session', name: 'spring-session-jdbc', version: springSessionVersion
+    implementation group: 'org.hibernate', name: 'hibernate-core', version: hibernateCoreVersion
+    implementation group: 'org.postgresql', name: 'postgresql', version: postgresVersion
+
+    // Utils
+    implementation group: 'com.google.guava', name: 'guava', version: guavaVersion
+    implementation group: 'org.apache.commons', name: 'commons-text', version: apacheCommonsVersion
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okHttpVersion
+    implementation group: 'org.json', name: 'json', version: jsonVersion
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+
+    // Logger
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    implementation group: 'log4j', name: 'log4j', version: log4jVersion
+
+    // Lombok
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+    // Testing
+    testImplementation group: 'org.springframework.security', name: 'spring-security-test', version: springVersion
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springBootVersion
+    testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: testContainersVersion
+    testImplementation group: 'org.testcontainers', name: 'postgresql', version: testContainersVersion
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+}
+
+test { useJUnitPlatform() }
