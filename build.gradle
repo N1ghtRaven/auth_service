@@ -9,7 +9,7 @@ tasks.named("bootBuildImage") {
 
 ext {
     projectGroup = 'works.red_eye.hood'
-    projectVersion = '0.1.0'
+    projectVersion = '1.0.0'
 
     springVersion = '5.3.12.RELEASE'
     springBootVersion = '2.5.4'
@@ -26,6 +26,7 @@ ext {
     junitVersion = '5.8.1'
     mockitoVersion = '4.0.0'
 
+    // JWT
     jjwtVersion = '0.9.1'
     nimbusJwtVersion = '9.15.2'
 
