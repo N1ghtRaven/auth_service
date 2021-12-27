@@ -22,6 +22,7 @@ Build Docker Image:
     - dev
     - /^dev_[0-9\.]$/
   before_script:
+    - export REGENERATOR_IMAGE=$CI_REGISTRY/$REGENERATOR_IMAGE
     - echo $CI_REGISTRY_PASSWORD | docker -H $DOCKER_HOST login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
     - docker -H $DOCKER_HOST pull $REGENERATOR_IMAGE
   script:
