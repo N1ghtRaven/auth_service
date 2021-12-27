@@ -1,0 +1,34 @@
+image: dtforce/dind-gradle:v7.2.0-jdk11
+
+stages:
+  - build
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_LOG: "build.log"
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+services:
+  - name: docker:dind
+    command: [ "--tls=false" ]
+
+Build Docker Image:
+  stage: build
+  only:
+    - master
+    - /^v[0-9\.]$/
+    - dev
+    - /^dev_[0-9\.]$/
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker -H $DOCKER_HOST login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker -H $DOCKER_HOST pull $REGENERATOR_IMAGE
+  script:
+    - gradle check bootBuildImage | tee $GRADLE_LOG
+  after_script:
+    - export IMAGE_NAME=`grep -E "Building image" $GRADLE_LOG | grep -Eo "\w*/\w*:[0-9\.]*"`
+    - export APP_VERSION=`echo $IMAGE_NAME | grep -Eo "[0-9\.]*"`
+    - docker tag $IMAGE_NAME $CI_REGISTRY_IMAGE:$APP_VERSION
+    - docker tag $IMAGE_NAME $CI_REGISTRY_IMAGE:latest
+    - docker -H $DOCKER_HOST push --all-tags $CI_REGISTRY_IMAGE
