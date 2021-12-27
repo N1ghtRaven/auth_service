@@ -34,3 +34,7 @@ Build Docker Image:
     - docker tag $IMAGE_NAME $CI_REGISTRY_IMAGE:$APP_VERSION
     - docker tag $IMAGE_NAME $CI_REGISTRY_IMAGE:latest
     - docker -H $DOCKER_HOST push --all-tags $CI_REGISTRY_IMAGE
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
