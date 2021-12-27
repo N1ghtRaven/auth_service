@@ -126,9 +126,9 @@ public class RsaRegeneratorServiceImpl implements RsaRegeneratorService {
     private OkHttpClient getHttpClient() {
         return new OkHttpClient()
                 .newBuilder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
+                .connectTimeout(120, TimeUnit.SECONDS)
+                .writeTimeout(120, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
                 .build();
     }
 
