@@ -9,7 +9,6 @@ import works.red_eye.hood.auth.dto.Response;
 import works.red_eye.hood.auth.exception.ForbiddenException;
 import works.red_eye.hood.auth.exception.JwtAuthenticationException;
 import works.red_eye.hood.auth.exception.NotFoundException;
-import works.red_eye.hood.auth.exception.UnauthorizedException;
 import works.red_eye.hood.auth.service.TokenService;
 
 @RestController
@@ -23,7 +22,7 @@ public class TokenController {
 
     @PostMapping("/token")
     public ResponseEntity<Response> token(@RequestParam String username, @RequestParam String password)
-            throws ForbiddenException, UnauthorizedException, NotFoundException {
+            throws ForbiddenException, NotFoundException {
 
         return tokenService.issueTokens(username, password);
     }
@@ -42,7 +41,7 @@ public class TokenController {
     }
 
     @PostMapping("/revoke")
-    public ResponseEntity<Response> revoke(@RequestParam("token") String token,
+    public ResponseEntity<Response> revoke(@RequestParam("refresh_token") String token,
                                            @RequestParam(value = "fingerprint", required = false) String fgp,
                                            @CookieValue(value = "__Secure-Fgp", required = false) String fgpCookie)
             throws JwtAuthenticationException {

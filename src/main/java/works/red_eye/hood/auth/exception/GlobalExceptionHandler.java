@@ -1,7 +1,5 @@
 package works.red_eye.hood.auth.exception;
 
-import org.springframework.web.bind.annotation.ControllerAdvice;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;

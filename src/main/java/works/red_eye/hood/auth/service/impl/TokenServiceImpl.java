@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +19,6 @@ import works.red_eye.hood.auth.entity.User;
 import works.red_eye.hood.auth.exception.ForbiddenException;
 import works.red_eye.hood.auth.exception.JwtAuthenticationException;
 import works.red_eye.hood.auth.exception.NotFoundException;
-import works.red_eye.hood.auth.exception.UnauthorizedException;
 import works.red_eye.hood.auth.service.FingerprintService;
 import works.red_eye.hood.auth.service.RsaRegeneratorService;
 import works.red_eye.hood.auth.service.TokenService;
@@ -29,6 +30,15 @@ import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
+
+    @AllArgsConstructor
+    @Getter
+    private enum TokenType {
+        ACCESS_TOKEN("access"),
+        REFRESH_TOKEN("refresh");
+
+        private final String name;
+    }
 
     private final FingerprintService fingerprintService;
     private final UserService userService;
@@ -51,11 +61,11 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public ResponseEntity<Response> issueTokens(String username, String password)
-            throws NotFoundException, ForbiddenException, UnauthorizedException {
+            throws NotFoundException, ForbiddenException {
 
         User user = userService.getUser(username);
         if (!userService.isCorrectPassword(user, password))
-            throw new UnauthorizedException();
+            throw new NotFoundException(user.getUsername());
 
         if (!user.isEnabled())
             throw new ForbiddenException(username);
@@ -114,11 +124,11 @@ public class TokenServiceImpl implements TokenService {
             throw new JwtAuthenticationException("JWT token is expired or invalid");
         }
 
-        if (claims.getExpiration().before(new Date()))
-            throw new JwtAuthenticationException("JWT token is expired");
+        if (!claims.getAudience().equals(TokenType.REFRESH_TOKEN.getName()))
+            throw new JwtAuthenticationException("Invalid token audience");
 
-        String fingerprintHash = (String) claims.get("fingerprint");
-        if (!validateHash(fingerprint, fingerprintHash))
+        String jti = (String) claims.get("jti");
+        if (!validateHash(fingerprint, jti))
             throw new JwtAuthenticationException("Invalid fingerprint");
 
         if (fingerprintService.isRevoked(fingerprint))
@@ -126,16 +136,16 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private String createAccessToken(String username, String fingerprint) {
-        return createToken(username, fingerprint, accessExpire);
+        return createToken(username, fingerprint, TokenType.ACCESS_TOKEN, accessExpire);
     }
 
     private String createRefreshToken(String username, String fingerprint) {
-        return createToken(username, fingerprint, refreshExpire);
+        return createToken(username, fingerprint, TokenType.REFRESH_TOKEN, refreshExpire);
     }
 
-    private String createToken(String username, String fingerprint, Integer tokenExpire) {
+    private String createToken(String username, String fingerprint, TokenType type, Integer tokenExpire) {
         Claims claims = Jwts.claims().setSubject(username);
-        claims.put("fingerprint", DigestUtils.sha256Hex(fingerprint));
+        claims.put("jti", DigestUtils.sha256Hex(fingerprint));
 
         Date now = new Date();
         Date expire = new Date(now.getTime() + (tokenExpire * 1000));
@@ -144,6 +154,7 @@ public class TokenServiceImpl implements TokenService {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expire)
+                .setAudience(type.getName())
                 .signWith(SignatureAlgorithm.RS256, signingKey)
                 .compact();
     }

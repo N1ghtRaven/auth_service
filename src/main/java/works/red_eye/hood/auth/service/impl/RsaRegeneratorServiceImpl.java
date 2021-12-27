@@ -17,13 +17,11 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.*;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
 public class RsaRegeneratorServiceImpl implements RsaRegeneratorService {
-
-    private final static String HASH_SALT = "bcc7c2a2-9ad0-48f9-840c-240ef6cf1c40";
-
     @Value("${jwt.rsa_regenerator.url}")
     private String url;
 
@@ -33,6 +31,9 @@ public class RsaRegeneratorServiceImpl implements RsaRegeneratorService {
     @Value("${jwt.encryption.secret}")
     private String encryptionSecret;
 
+    @Value("${jwt.secret.salt}")
+    private String secretSalt;
+
     private String signingId;
     private KeyPair signingPair;
 
@@ -41,10 +42,10 @@ public class RsaRegeneratorServiceImpl implements RsaRegeneratorService {
 
     @PostConstruct
     public void init() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        this.signingId = DigestUtils.sha256Hex(signingSecret + "_" + HASH_SALT);
+        this.signingId = DigestUtils.sha256Hex(signingSecret + "_" + secretSalt);
         this.signingPair = receiveKeyPair(signingSecret);
 
-        this.encryptionId = DigestUtils.sha256Hex(encryptionId + "_" + HASH_SALT);
+        this.encryptionId = DigestUtils.sha256Hex(encryptionId + "_" + secretSalt);
         this.encryptionPair = receiveKeyPair(encryptionSecret);
     }
 
@@ -114,14 +115,21 @@ public class RsaRegeneratorServiceImpl implements RsaRegeneratorService {
     }
 
     private String makeRequest(String secret) throws IOException {
-        OkHttpClient httpClient = new OkHttpClient().newBuilder().build();
         Request request = new Request.Builder().url(url + secret).method("GET", null).build();
-
-        Response response = httpClient.newCall(request).execute();
+        Response response = getHttpClient().newCall(request).execute();
         if (response.code() == 200)
             return Objects.requireNonNull(response.body()).string();
 
         return null;
+    }
+
+    private OkHttpClient getHttpClient() {
+        return new OkHttpClient()
+                .newBuilder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
     }
 
 }

@@ -36,10 +36,9 @@ public class FingerprintServiceImpl implements FingerprintService {
         return revokeFingerprintRepo.existsByFingerprint(fingerprint);
     }
 
-    @Override
     @Scheduled(fixedDelayString = "${fingerprint.clean.interval}")
     @Transactional
-    public void cleanExpired() {
+    void cleanExpired() {
          revokeFingerprintRepo.deleteAllByExpireBefore(LocalDateTime.now());
     }
 }
