@@ -31,7 +31,6 @@ ext {
     nimbusJwtVersion = '9.15.2'
 
     // Model submodule
-    springSessionVersion = '2.5.2'
     flywayVersion = '8.3.0'
     hibernateCoreVersion = '5.6.1.Final'
     hibernateVersion = '7.0.1.Final'
