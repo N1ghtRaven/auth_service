@@ -19,6 +19,7 @@ import works.red_eye.hood.auth.entity.User;
 import works.red_eye.hood.auth.exception.ForbiddenException;
 import works.red_eye.hood.auth.exception.JwtAuthenticationException;
 import works.red_eye.hood.auth.exception.NotFoundException;
+import works.red_eye.hood.auth.exception.UnauthorizedException;
 import works.red_eye.hood.auth.service.FingerprintService;
 import works.red_eye.hood.auth.service.RsaRegeneratorService;
 import works.red_eye.hood.auth.service.TokenService;
@@ -60,7 +61,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public ResponseEntity<Response> issueTokens(String username, String password)
+    public ResponseEntity<Response<AuthInfo>> issueTokens(String username, String password)
             throws NotFoundException, ForbiddenException {
 
         User user = userService.getUser(username);
@@ -82,12 +83,12 @@ public class TokenServiceImpl implements TokenService {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, getFingerprintCookie(fingerprint).toString())
-                .body(Response.ok(response));
+                .body(new Response<>(response));
     }
 
     @Override
-    public ResponseEntity<Response> refreshTokens(String refreshToken, String fingerprint)
-            throws JwtAuthenticationException, NotFoundException, ForbiddenException {
+    public ResponseEntity<Response<RefreshInfo>> refreshTokens(String refreshToken, String fingerprint)
+            throws JwtAuthenticationException, NotFoundException, ForbiddenException, UnauthorizedException {
 
         validateToken(refreshToken, fingerprint);
         String username = Jwts.parser()
@@ -102,12 +103,12 @@ public class TokenServiceImpl implements TokenService {
         response.setAccessToken(createAccessToken(username, fingerprint));
         response.setExpiresIn(accessExpire);
 
-        return ResponseEntity.ok(Response.ok(response));
+        return ResponseEntity.ok(new Response<>(response));
     }
 
     @Override
-    public ResponseEntity<Response> revokeFingerprint(String token, String fingerprint)
-            throws JwtAuthenticationException {
+    public ResponseEntity<Response<?>> revokeFingerprint(String token, String fingerprint)
+            throws JwtAuthenticationException, UnauthorizedException {
 
         validateToken(token, fingerprint);
         fingerprintService.revoke(fingerprint);
@@ -115,7 +116,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private void validateToken(String token, String fingerprint)
-            throws JwtAuthenticationException {
+            throws JwtAuthenticationException, UnauthorizedException {
 
         Claims claims;
         try {
@@ -126,6 +127,9 @@ public class TokenServiceImpl implements TokenService {
 
         if (!claims.getAudience().equals(TokenType.REFRESH_TOKEN.getName()))
             throw new JwtAuthenticationException("Invalid token audience");
+
+        if (fingerprint == null)
+            throw new UnauthorizedException();
 
         String jti = (String) claims.get("jti");
         if (!validateHash(fingerprint, jti))

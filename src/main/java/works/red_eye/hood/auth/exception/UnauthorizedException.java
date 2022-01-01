@@ -2,6 +2,6 @@ package works.red_eye.hood.auth.exception;
 
 public class UnauthorizedException extends AbstractException {
     public UnauthorizedException() {
-        super("Authorization required");
+        super("Fingerprint required");
     }
 }

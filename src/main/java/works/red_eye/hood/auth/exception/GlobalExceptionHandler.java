@@ -27,31 +27,27 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Response> handleContentNotFound(NotFoundException e) {
+    public ResponseEntity<Response<?>> handleContentNotFound(NotFoundException e) {
         return getHandlerResponse(e, NOT_FOUND);
     }
 
     @ExceptionHandler(JwtAuthenticationException.class)
-    public ResponseEntity<Response> handleContentJwt(JwtAuthenticationException e) {
+    public ResponseEntity<Response<?>> handleContentJwt(JwtAuthenticationException e) {
         return getHandlerResponse(e, BAD_REQUEST);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<Response> handleContentUnauthorized(UnauthorizedException e) {
+    public ResponseEntity<Response<?>> handleContentUnauthorized(UnauthorizedException e) {
         return getHandlerResponse(e, UNAUTHORIZED);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<Response> handleContentForbidden(ForbiddenException e) {
+    public ResponseEntity<Response<?>> handleContentForbidden(ForbiddenException e) {
         return getHandlerResponse(e, FORBIDDEN);
     }
 
-    private ResponseEntity<Response> getHandlerResponse(AbstractException e, HttpStatus status) {
-        return new ResponseEntity<>(Response.error(e.getDescription()), status);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Response> handleValidationExceptions(MethodArgumentNotValidException e) {
+    public ResponseEntity<Response<?>> handleValidationExceptions(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -62,7 +58,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Response> handleValidationExceptions(MethodArgumentTypeMismatchException e) {
+    public ResponseEntity<Response<?>> handleValidationExceptions(MethodArgumentTypeMismatchException e) {
         String name = e.getName();
         String type = null;
         if (e.getRequiredType() != null) {
@@ -75,12 +71,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(INTERNAL_SERVER_ERROR)
-    public ResponseEntity<Response> handleInternalServerError(HttpServletRequest request, RuntimeException e) {
+    public ResponseEntity<Response<?>> handleInternalServerError(RuntimeException e) {
         String error = "500: " + e.getMessage().replace("\"", "'");
-        String path = request.getRequestURI();
         String stacktrace = ExceptionUtils.getStackTrace(e);
         log.error(stacktrace);
-        return new ResponseEntity<>(Response.error(error, path), INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(Response.error(error), INTERNAL_SERVER_ERROR);
     }
 
+    private ResponseEntity<Response<?>> getHandlerResponse(AbstractException e, HttpStatus status) {
+        return new ResponseEntity<>(Response.error(e.getDescription()), status);
+    }
 }

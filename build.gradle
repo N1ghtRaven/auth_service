@@ -9,11 +9,12 @@ tasks.named("bootBuildImage") {
 
 ext {
     projectGroup = 'works.red_eye.hood'
-    projectVersion = '1.0.0'
+    projectVersion = '1.1.0'
 
     springVersion = '5.3.12.RELEASE'
     springBootVersion = '2.5.4'
     springSecurityVersion = '2.6.1'
+    openapiVersion = '1.5.2'
     lombokVersion = '1.18.20'
     guavaVersion = '31.0.1-jre'
     apacheCommonsVersion = '1.9'
@@ -56,6 +57,7 @@ dependencies {
     implementation group: 'org.hibernate', name: 'hibernate-validator', version: validatorVersion
     implementation group: 'io.jsonwebtoken', name: 'jjwt', version: jjwtVersion
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: nimbusJwtVersion
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: openapiVersion
     developmentOnly group: 'org.springframework.boot', name: 'spring-boot-devtools', version: springBootVersion
 
     // Model
